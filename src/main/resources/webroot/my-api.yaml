@@ -35,6 +35,22 @@ paths:
         default:
           $ref: '#/components/responses/UnexpectedError'
   /visitorBook:
+    get:
+      operationId: listVisitors
+      responses:
+        '200':
+          description: Visitor list
+          content:
+            application/json:
+              schema:
+                required:
+                  - visitors
+                properties:
+                  visitors:
+                    type: array
+                    items:
+                      type: string
+                      example: 'Visitor'
     post:
       summary: Sign visitor book with my name
       operationId: signVisitorBook

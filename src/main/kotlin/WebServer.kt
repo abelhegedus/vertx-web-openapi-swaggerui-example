@@ -6,7 +6,6 @@ import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.api.RequestParameters
-import io.vertx.ext.web.api.contract.RouterFactoryOptions
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory
 import io.vertx.ext.web.handler.StaticHandler
 import io.vertx.kotlin.core.json.json
@@ -51,10 +50,6 @@ class WebServer(
         routerFactoryFuture.compose { routerFactory ->
             
             routerFactory.apply { 
-                // Enable automatic response when ValidationException is thrown
-                options = RouterFactoryOptions().apply {
-                    isMountValidationFailureHandler = true
-                }
                 // Add routes handlers
                 addHandlerByOperationId("getHelloMessage") {
                     val params: RequestParameters = it.get("parsedParameters")
@@ -81,7 +76,11 @@ class WebServer(
                     visitors.clear()
                     it.response().setStatusMessage("Visitor book cleared").setStatusCode(200).end(JsonObject().put("message", "done").encodePrettily())
                 }
-
+                addHandlerByOperationId("listVisitors") {
+                    logger.info("listVisitors called")
+                    val jsonObject = JsonObject.mapFrom(VisitorList(visitors))
+                    it.response().end(jsonObject.encodePrettily())
+                }
             }
 
             // Generate the router
@@ -97,7 +96,7 @@ class WebServer(
                 if (logger.isTraceEnabled) {
                     logger.trace("Request $it")
                 }
-                baseRouter.accept(it)
+                baseRouter.handle(it)
             }.listen(apiPort, serverFuture)
             serverFuture.map {
                 logger.info("Web API started listening on $apiPort")
